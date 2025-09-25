@@ -30,6 +30,7 @@ describe("Register Endpoint", () => {
       firstName: "Test",
       lastName: "User",
     },
+    name: "Test User",
   };
 
   test("should register a new user successfully", async () => {
@@ -49,10 +50,12 @@ describe("Register Endpoint", () => {
     expect(response.body).toHaveProperty("user");
     expect(response.body.user).toHaveProperty("_id");
     expect(response.body.user.email).toBe(validUserData.email);
+    expect(response.body.user.name).toBe('Test User');
 
     // Check if user was actually saved in the database
     const user = await User.findOne({ email: validUserData.email });
     expect(user).toBeTruthy();
+    expect(user.name).toBe('Test User');
     expect(user.fullName.firstName).toBe(validUserData.fullName.firstName);
     expect(user.fullName.lastName).toBe(validUserData.fullName.lastName);
   });

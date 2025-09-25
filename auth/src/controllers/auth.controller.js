@@ -28,6 +28,7 @@ async function registerController(req, res) {
       username,
       email,
       password: hashedPassword,
+      name: `${firstName} ${lastName}`,
       fullName: {
         firstName,
         lastName,
@@ -58,6 +59,7 @@ async function registerController(req, res) {
         _id: user._id,
         username: user.username,
         email: user.email,
+        name: user.name,
         fullName: user.fullName,
         role: user.role,
       },
@@ -111,6 +113,7 @@ async function loginController(req, res) {
         _id: user._id,
         username: user.username,
         email: user.email,
+        name: user.name,
         fullName: user.fullName,
         role: user.role,
       },
