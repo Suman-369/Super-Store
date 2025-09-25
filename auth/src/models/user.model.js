@@ -1,15 +1,58 @@
 const mongoose = require("mongoose");
 
 const addressSchema = new mongoose.Schema({
-  details: { type: String },
-  city: { type: String },
-  state: { type: String },
-  zip: { type: String },
-  country: { type: String },
+  fullName: {
+    type: String,
+    required: true,
+  },
+  phoneNumber: {
+    type: String,
+    required: true,
+    validate: {
+      validator: function(v) {
+        return /^\d{10}$/.test(v);
+      },
+      message: 'Invalid phone number'
+    }
+  },
+  addressLine1: {
+    type: String,
+    required: true,
+  },
+  addressLine2: {
+    type: String,
+  },
+  city: {
+    type: String,
+    required: true,
+  },
+  state: {
+    type: String,
+    required: true,
+  },
+  pincode: {
+    type: String,
+    required: true,
+    validate: {
+      validator: function(v) {
+        return /^\d{6}$/.test(v);
+      },
+      message: 'Invalid pincode'
+    }
+  },
+  isDefault: {
+    type: Boolean,
+    default: false,
+  },
+  type: {
+    type: String,
+    enum: ['home', 'work', 'other'],
+    default: 'home',
+  },
 });
 
 const userSchema = new mongoose.Schema({
-  name: {
+  username: {
     type: String,
     required: true,
     unique: true,
@@ -21,6 +64,7 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
+    select:false,
   },
   fullName: {
     firstName: {
@@ -37,7 +81,7 @@ const userSchema = new mongoose.Schema({
     enum: ["seller", "user"],
     default: "user",
   },
-  address: [addressSchema],
+  addresses: [addressSchema],
 });
 
 const userModel = mongoose.model("user",userSchema)
