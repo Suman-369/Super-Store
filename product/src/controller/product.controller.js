@@ -1,4 +1,4 @@
-const Product = require("../models/product.model");
+const productModel = require("../models/product.model");
 const uploadImg = require("../services/Storage.service");
 
 async function createProduct(req, res) {
@@ -19,19 +19,19 @@ async function createProduct(req, res) {
           uploadImg({ buffer: file.buffer, filename: file.originalname })
         )
       );
-      images = files.map(file => ({
+      images = files.map((file) => ({
         url: file.url,
         id: file.fileId,
-        thumbnail: file.url, // Assuming thumbnail is same as url for now
+        thumbnail: file.url,
       }));
     }
 
-    const product = await Product.create({
+    const product = await productModel.create({
       title,
       description,
       price,
       seller,
-      images
+      images,
     });
 
     res.status(201).json(product);
@@ -41,4 +41,141 @@ async function createProduct(req, res) {
   }
 }
 
-module.exports = { createProduct };
+async function getProducts(req, res) {
+  try {
+    const { q, minprice, maxprice, skip = 0, limit = 20 } = req.query;
+
+    const filter = {};
+
+    if (q) {
+      filter.$text = { $search: q };
+    }
+
+    if (minprice) {
+      filter["price.amount"] = {
+        ...filter["price.amount"],
+        $gte: Number(minprice),
+      };
+    }
+
+    if (maxprice) {
+      filter["price.amount"] = {
+        ...filter["price.amount"],
+        $lte: Number(maxprice),
+      };
+    }
+
+    const products = await productModel
+      .find(filter)
+      .skip(Number(skip))
+      .limit(Math.min(Number(limit), 20));
+
+    return res.status(200).json({ data: products });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch products" });
+  }
+}
+
+async function getProductById(req, res) {
+  try {
+    const { id } = req.params;
+    const product = await productModel.findById(id);
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+    return res.status(200).json({ product });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch product" });
+  }
+}
+
+async function updateProduct(req, res) {
+  try {
+    const { id } = req.params;
+
+    const product = await productModel.findById(id);
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    const sellerId = req.user && req.user.id;
+    if (!sellerId || String(product.seller) !== String(sellerId)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const { title, description, priceAmount, priceCurrency } = req.body;
+    const update = {};
+    if (title !== undefined) update.title = title;
+    if (description !== undefined) update.description = description;
+    if (priceAmount !== undefined || priceCurrency !== undefined) {
+      update.price = {
+        amount:
+          priceAmount !== undefined
+            ? Number(priceAmount)
+            : product.price && product.price.amount,
+        currency:
+          priceCurrency || (product.price && product.price.currency) || "INR",
+      };
+    }
+
+    const updated = await productModel.findByIdAndUpdate(id, update, {
+      new: true,
+    });
+
+    return res.status(200).json({ product: updated });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Failed to update product" });
+  }
+}
+
+async function deleteProduct(req, res) {
+  try {
+    const { id } = req.params;
+
+    const product = await productModel.findById(id);
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    const sellerId = req.user && req.user.id;
+    if (!sellerId || String(product.seller) !== String(sellerId)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    await productModel.findByIdAndDelete(id);
+
+    return res.status(200).json({ message: "Product deleted" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Failed to delete product" });
+  }
+}
+
+async function getProductsBySeller(req, res) {
+  try {
+    const sellerId = req.user && req.user.id;
+    if (!sellerId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const {skip = 0, limit = 20} = req.query;
+
+    const products = await productModel.find({ seller: sellerId }).skip(Number(skip)).limit(Math.min(Number(limit), 20));
+    return res.status(200).json({ data: products });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Failed to fetch seller products" });
+  }
+}
+
+module.exports = {
+  createProduct,
+  getProducts,
+  getProductById,
+  updateProduct,
+  deleteProduct,
+  getProductsBySeller,
+};
