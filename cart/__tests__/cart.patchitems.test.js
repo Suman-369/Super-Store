@@ -100,7 +100,7 @@ describe('PATCH /api/cart/items/:productId', () => {
         expect(res.body.errors).toBeDefined();
     });
 
-    test('validation error invalid qty', async () => {
+    test('removes item when qty is 0', async () => {
         const token = signToken({ _id: userId, role: 'user' });
         await request(app)
             .post(postEndpoint)
@@ -112,8 +112,9 @@ describe('PATCH /api/cart/items/:productId', () => {
             .set('Authorization', `Bearer ${token}`)
             .send({ qty: 0 });
 
-        expect(res.status).toBe(400);
-        expect(res.body.errors).toBeDefined();
+        expect(res.status).toBe(200);
+        expect(res.body.message).toBe('Item updated');
+        expect(res.body.cart.items).toHaveLength(0);
     });
 
     test('401 when no token', async () => {

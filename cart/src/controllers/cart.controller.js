@@ -65,7 +65,11 @@ async function updateItemQuantity(req, res) {
     if (existingItemIndex < 0) {
         return res.status(404).json({ message: 'Item not found' });
     }
-    cart.items[ existingItemIndex ].quantity = qty;
+    if (qty === 0) {
+        cart.items.splice(existingItemIndex, 1);
+    } else {
+        cart.items[ existingItemIndex ].quantity = qty;
+    }
     await cart.save();
     res.status(200).json({ message: 'Item updated', cart });
 }
