@@ -3,6 +3,8 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const redis = require("../db/redis");
 
+const { publishtoQueue } = require("../broker/broker");
+
 async function registerController(req, res) {
   try {
     const {
@@ -10,7 +12,7 @@ async function registerController(req, res) {
       email,
       password,
       fullName: { firstName, lastName },
-      role
+      role,
     } = req.body;
 
     const isUserExist = await userModel.findOne({
@@ -33,7 +35,16 @@ async function registerController(req, res) {
         firstName,
         lastName,
       },
-      role
+      role,
+    });
+
+    // Publish user registration event to RabbitMQ
+
+    await publishtoQueue("AUTH_NOTIFICATION.USER_CREATED", {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      fullName: user.fullName,
     });
 
     const token = jwt.sign(
