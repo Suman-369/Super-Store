@@ -63,4 +63,46 @@ module.exports = function () {
       emailHTMLTemplate
     );
   });
+
+  consumeFromQueue("PAYMENT_NOTIFICATION.PAYMENT_COMPLETED", async (data) => {
+    const emailHTMLTemplate = `
+      <h1>Your Payment was Successful!</h1>
+      <p>Dear Customer,</p>
+      <p>We are pleased to inform you that your payment for order <strong>${
+        data.orderId  
+      }</strong> has been successfully processed.</p>
+      <p><strong>Payment Details:</strong></p>
+      <ul>
+        <li>Payment ID: ${data.paymentId}</li>
+        <li>Amount Paid: ${data.amount} ${data.currency}</li>
+      </ul>
+      <p>Thank you for shopping with us!</p>
+      <p>Best Regards,<br/>Suman's Store Team</p>
+    `
+    await sendEmail(
+      data.email,
+      "Payment Successful - Suman's Store",
+      "",
+      emailHTMLTemplate
+    );
+  })
+
+
+  consumeFromQueue("PAYMENT_NOTIFICATION.PAYMENT_FAILED", async (data) => {
+    const emailHTMLTemplate = `
+      <h1>Your Payment Failed</h1>
+      <p>Dear Customer,</p>
+      <p>We regret to inform you that your payment for order <strong>${
+        data.orderId
+      }</strong> was unsuccessful.</p>
+      <p>Please try again or contact our support team for assistance.</p>
+      <p>Best Regards,<br/>Suman's Store Team</p>
+    `
+    await sendEmail(
+      data.email,
+      "Payment Failed - Suman's Store",
+      "",
+      emailHTMLTemplate
+    );
+  });
 };
