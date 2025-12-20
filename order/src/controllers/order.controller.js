@@ -73,6 +73,9 @@ async function createOrder(req, res) {
       shippingAddress: req.body.shippingAddress,
     });
 
+
+    await publishToQueue("ORDER_SELLER_DASHBOARD.ORDER_CREATED", order)
+
     res.status(201).json({
       message: "Order created successfully",
       order,

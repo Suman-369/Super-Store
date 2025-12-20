@@ -8,6 +8,10 @@ app.use(cors());
 app.use(express.json());
 app.use(cookiesParser());
 
+app.get("/",(req,res)=>{
+    res.status(200).json({message:"Payment Service is up and running"})
+})
+
 app.use("/api/payments", paymentRoutes);
 
 module.exports = app;

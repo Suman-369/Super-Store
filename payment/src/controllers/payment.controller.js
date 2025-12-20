@@ -45,6 +45,9 @@ async function createPayment(req, res) {
       },
     });
 
+    await publishtoQueue("PAYMENT_SALLER_DASHBOARD.PAYMENT_CREATED",payment)
+
+
     res.status(201).json({
       message: "Payment created successfully",
       payment,
@@ -91,6 +94,9 @@ async function verifyPayment(req, res) {
     await payment.save();
 
     // Publish payment success event to RabbitMQ
+
+
+    await publishtoQueue("PAYMENT_SALLER_DASHBOARD.PAYMENT_COMPLETED",payment)
 
     await publishtoQueue("PAYMENT_NOTIFICATION.PAYMENT_COMPLETED",{
       email: req.user.email,
